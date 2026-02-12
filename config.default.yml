@@ -1,0 +1,48 @@
+project:
+  name: "my-project"
+  author: ""
+  description: ""
+
+coding:
+  style: "functional"              # functional | classes | mixed
+  simplicity: true                 # YAGNI enforcement
+  max_function_lines: 50
+  comments: "minimal"              # minimal | moderate
+
+testing:
+  philosophy: "tdd-strict"         # tdd-strict | tdd-relaxed | test-after
+  coverage_threshold: 80
+  require_integration_tests: true
+  require_e2e_tests: false
+
+lint:
+  js:
+    linter: "biome"                # biome | eslint
+    formatter: "biome"             # biome | prettier
+  py:
+    linter: "ruff"                 # ruff | flake8
+    formatter: "ruff"              # ruff | black
+    type_checker: "mypy"           # mypy | pyright
+
+version_control:
+  commit_format: "conventional"    # conventional | simple | gitmoji
+  pre_commit_hooks: true
+  never_skip_hooks: true
+
+agents:
+  generate:
+    - agents_md
+    - claude
+    - cursor
+    - copilot
+    - windsurf
+    - cline
+    - aider
+    - amazonq
+    - gemini
+
+ci:
+  enabled: true
+  provider: "github-actions"
+
+custom_rules: []
