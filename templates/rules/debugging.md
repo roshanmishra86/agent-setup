@@ -31,3 +31,37 @@ Follow this systematic debugging framework for any technical issue:
 - Never claim to implement a pattern without reading it completely first.
 - Always test after each change.
 - If the first fix does not work, stop and re-analyze rather than adding more fixes.
+
+### Reporting Issues
+
+When a failure is found, always follow **Report → Propose → Approve → Fix**:
+
+1. **Report** the failure clearly: what broke, where, and what the error says.
+2. **Propose** a specific fix with reasoning.
+3. **Wait for approval** before applying the fix.
+4. **Fix** and re-validate.
+
+NEVER auto-fix silently. NEVER apply multiple speculative fixes hoping one will work.
+
+### Issue Severity Format
+
+When reporting problems (in reviews, analysis, or debugging sessions), use consistent severity levels:
+
+- **[CRITICAL]** — Must fix before proceeding. Causes data loss, security vulnerability, crashes, or incorrect results.
+- **[WARNING]** — Should fix soon. Degrades quality, reliability, or maintainability.
+- **[SUGGESTION]** — Nice to have. Minor improvement, style, or optional refactor.
+
+**Report format:**
+```
+[CRITICAL] src/auth.ts:42
+  Issue: Password stored in plain text
+  Fix: Hash with bcrypt before storing
+
+[WARNING] src/user.ts:15
+  Issue: No input validation on email field
+  Fix: Validate format before processing
+
+[SUGGESTION] src/utils.ts:28
+  Issue: Loop could be replaced with array method
+  Fix: Use .filter().map() for clarity
+```

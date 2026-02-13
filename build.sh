@@ -204,6 +204,26 @@ setup_commands() {
     fi
 }
 
+# ── Copy Claude Code skills ────────────────────────────────────────
+setup_skills() {
+    local skills_src="$TEMPLATE_DIR/skills"
+    if [ -d "$skills_src" ]; then
+        log_step "Copying Claude Code skills"
+        local skills_dst="$PROJECT_DIR/.claude/commands"
+        ensure_dir "$skills_dst"
+        # Copy each skill subdirectory
+        for skill_dir in "$skills_src"/*/; do
+            if [ -d "$skill_dir" ]; then
+                local skill_name
+                skill_name="$(basename "$skill_dir")"
+                ensure_dir "$skills_dst/$skill_name"
+                cp "$skill_dir"/* "$skills_dst/$skill_name/"
+            fi
+        done
+        log_ok ".claude/commands/"
+    fi
+}
+
 # ── Install dev dependencies ───────────────────────────────────────
 install_dependencies() {
     cd "$PROJECT_DIR"
@@ -259,6 +279,7 @@ print_summary() {
     echo "  Agents:    ${agents_list//,/, }"
     echo "  CI:        $(cfg_get ci.enabled true)"
     echo "  Hooks:     $(cfg_get version_control.pre_commit_hooks true)"
+    echo "  Skills:    .claude/commands/"
     echo ""
 
     if [ "$PROJECT_TYPE" = "js" ]; then
@@ -282,6 +303,7 @@ setup_gitignore
 generate_agents_md "$PROJECT_DIR" "$TEMPLATE_DIR"
 generate_agent_configs "$PROJECT_DIR" "$TEMPLATE_DIR"
 setup_commands
+setup_skills
 generate_ci "$PROJECT_DIR" "$TEMPLATE_DIR"
 generate_precommit "$PROJECT_DIR" "$TEMPLATE_DIR"
 generate_readme "$PROJECT_DIR" "$TEMPLATE_DIR"

@@ -35,15 +35,57 @@
 - NEVER ignore test output — logs and messages often contain critical information.
 - Test output must be clean to pass. If logs are expected to contain errors, capture and assert on them.
 
+### What to Test vs What to Skip
+
+**Test these:**
+- Happy path (normal, expected usage)
+- Edge cases (boundaries, empty input, null/None/undefined)
+- Error cases (invalid input, failure modes)
+- Business logic and core transformations
+- All exported/public APIs
+
+**Do NOT test these:**
+- Third-party libraries (trust them)
+- Framework internals
+- Simple getters/setters with no logic
+- Private implementation details
+
+### Coverage Goals
+
+| Code type | Target |
+|-----------|--------|
+| Business logic, data transformations | 100% |
+| Public APIs, user-facing features | 90%+ |
+| Utilities and helpers | 80%+ |
+| Simple wrappers, config | Optional |
+
+### Test Structure (AAA Pattern)
+
+Every test should follow Arrange → Act → Assert:
+
+```
+test('calculateTotal returns sum of item prices', () => {
+  // Arrange
+  const items = [{ price: 10 }, { price: 20 }, { price: 30 }];
+
+  // Act
+  const result = calculateTotal(items);
+
+  // Assert
+  expect(result).toBe(60);
+});
+```
+
 ### Best Practices
 
 - Parameterize test inputs; never embed unexplained literals directly in tests.
 - Do not add a test unless it can fail for a real defect.
-- Test names should state exactly what the assertion verifies.
+- Test names should state exactly what the assertion verifies — describe the expected behaviour, not the implementation.
 - Compare results to independent, pre-computed expectations, never to the function's own output reused as the oracle.
 - Test edge cases, realistic input, unexpected input, and boundaries.
 - Use strong assertions (`assert x == 1`) over weak ones (`assert x >= 1`).
 - Group related tests together.
+- Keep tests independent — no shared mutable state, runnable in any order.
 {{#TOOLING_JS}}
 
 ### Test Commands

@@ -256,6 +256,7 @@ generate_agents_md() {
     output+="$(process_rule "$rules_dir/debugging.md")"$'\n'
     output+="$(process_rule "$rules_dir/task-management.md")"$'\n'
     output+="$(process_rule "$rules_dir/code-organization.md")"$'\n'
+    output+="$(process_rule "$rules_dir/code-review.md")"$'\n'
 
     # Custom rules from config
     local custom_rules
