@@ -50,14 +50,14 @@ Options:
   --no-hooks            Skip pre-commit hook generation
   --agents LIST         Comma-separated list of agents to generate
                         (default: all from config)
-                        Available: agents_md,claude,cursor,copilot,windsurf,
-                                   cline,aider,amazonq,gemini
+                        Available: agents_md,opencode,claude,codex,
+                                   antigravity,cursor,gemini
   -h, --help            Show this help message
 
 Examples:
   build.sh js -n my-app
   build.sh py -n my-api -c config.yml
-  build.sh js -n my-app --no-ci --agents claude,cursor,copilot
+  build.sh js -n my-app --no-ci --agents opencode,claude,cursor
 USAGE
 }
 

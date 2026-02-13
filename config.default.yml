@@ -32,13 +32,11 @@ version_control:
 agents:
   generate:
     - agents_md
+    - opencode
     - claude
+    - codex
+    - antigravity
     - cursor
-    - copilot
-    - windsurf
-    - cline
-    - aider
-    - amazonq
     - gemini
 
 ci:

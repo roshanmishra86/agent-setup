@@ -10,23 +10,21 @@ Running `./build.sh js -n my-app` creates a ready-to-work project:
 
 ```
 my-app/
-├── AGENTS.md                        # Universal guidelines — all agents read this
-├── CLAUDE.md                        # Claude Code / Claude CLI
+├── AGENTS.md                        # Universal guidelines (OpenCode, Codex read this directly)
+├── CLAUDE.md                        # Claude Code
 ├── GEMINI.md                        # Gemini CLI
-├── CONVENTIONS.md                   # Aider conventions
-├── .windsurfrules                   # Windsurf
-├── .aider.conf.yml                  # Aider config
+├── opencode.json                    # OpenCode MCP config (if MCPs configured)
+├── .agent/rules/*.md                # Antigravity rules (activation frontmatter)
 ├── .cursor/
 │   ├── rules/*.mdc                  # Cursor rules
-│   └── mcp.json                     # Cursor MCP servers (if configured)
+│   └── mcp.json                     # Cursor MCP servers (if MCPs configured)
+├── .gemini/
+│   └── settings.json                # Gemini CLI MCP servers (if MCPs configured)
+├── .mcp.json                        # Claude Code MCP servers (if MCPs configured)
 ├── .github/
-│   ├── copilot-instructions.md      # GitHub Copilot
 │   └── workflows/ci.yml             # GitHub Actions CI
-├── .clinerules/*.md                 # Cline
-├── .amazonq/rules/*.md              # Amazon Q
 ├── .agents/commands/*.md            # Workflow slash commands
-├── .claude/commands/                # Claude Code skills (optional)
-├── .mcp.json                        # Project MCP servers (if configured)
+├── .claude/commands/                # Claude Code skills
 ├── .pre-commit-config.yaml
 ├── .gitignore
 ├── README.md
@@ -78,8 +76,8 @@ Options:
   --no-ci               Skip CI workflow generation
   --no-hooks            Skip pre-commit hook generation
   --agents LIST         Comma-separated agents to generate
-                        Available: agents_md, claude, cursor, copilot,
-                                   windsurf, cline, aider, amazonq, gemini
+                        Available: agents_md, opencode, claude, codex,
+                                   antigravity, cursor, gemini
   -h, --help            Show help
 ```
 
@@ -108,16 +106,16 @@ The full list of options with their defaults is in `config.default.yml`.
 
 ## Supported agents
 
-| Agent | Config generated |
-|-------|-----------------|
-| Claude Code | `CLAUDE.md` |
-| Gemini CLI | `GEMINI.md` |
-| GitHub Copilot | `.github/copilot-instructions.md` |
-| Cursor | `.cursor/rules/*.mdc` |
-| Windsurf | `.windsurfrules` |
-| Cline | `.clinerules/*.md` |
-| Aider | `.aider.conf.yml` + `CONVENTIONS.md` |
-| Amazon Q | `.amazonq/rules/*.md` |
+| Agent | Config generated | Notes |
+|-------|-----------------|-------|
+| OpenCode | `opencode.json` (MCP only) | Reads `AGENTS.md` natively |
+| Claude Code | `CLAUDE.md`, `.mcp.json` | |
+| Codex CLI | — | Reads `AGENTS.md` natively |
+| Antigravity | `.agent/rules/*.md` | Rules with `activation: always_on` frontmatter |
+| Cursor | `.cursor/rules/*.mdc`, `.cursor/mcp.json` | Rules with YAML frontmatter |
+| Gemini CLI | `GEMINI.md`, `.gemini/settings.json` | |
+
+OpenCode is the default — it's the first entry in `config.default.yml` and the recommended starting point.
 
 ## Workflow commands
 
@@ -148,10 +146,16 @@ mcps:
   tavily: true             # Requires TAVILY_API_KEY env var
 ```
 
-When any server is enabled, two files are generated:
+When any server is enabled, a config file is generated for each enabled agent that supports project-level MCP:
 
-- **`.mcp.json`** — project root, read by Claude Code and other tools that follow this convention
-- **`.cursor/mcp.json`** — Cursor's project-level MCP config (same format, different path)
+| Tool | File | Format |
+|------|------|--------|
+| Claude Code | `.mcp.json` | Standard `mcpServers` |
+| Cursor | `.cursor/mcp.json` | Standard `mcpServers` |
+| Gemini CLI | `.gemini/settings.json` | Standard `mcpServers` |
+| OpenCode | `opencode.json` | OpenCode `mcp.type/command` |
+
+Codex and Antigravity configure MCP globally only — no project-level file is generated for them.
 
 ### Available servers
 
