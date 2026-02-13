@@ -16,7 +16,9 @@ my-app/
 ├── CONVENTIONS.md                   # Aider conventions
 ├── .windsurfrules                   # Windsurf
 ├── .aider.conf.yml                  # Aider config
-├── .cursor/rules/*.mdc              # Cursor rules
+├── .cursor/
+│   ├── rules/*.mdc                  # Cursor rules
+│   └── mcp.json                     # Cursor MCP servers (if configured)
 ├── .github/
 │   ├── copilot-instructions.md      # GitHub Copilot
 │   └── workflows/ci.yml             # GitHub Actions CI
@@ -24,6 +26,7 @@ my-app/
 ├── .amazonq/rules/*.md              # Amazon Q
 ├── .agents/commands/*.md            # Workflow slash commands
 ├── .claude/commands/                # Claude Code skills (optional)
+├── .mcp.json                        # Project MCP servers (if configured)
 ├── .pre-commit-config.yaml
 ├── .gitignore
 ├── README.md
@@ -130,6 +133,40 @@ The generated project includes a set of workflow commands in `.agents/commands/`
 | `generate-tasks.md` | Break a feature into a phased task list |
 | `process-task-list.md` | Execute a task list step by step |
 | `create-prd.md` | Turn a feature idea into a structured PRD |
+
+## MCP servers
+
+MCP (Model Context Protocol) servers extend your AI tool with extra capabilities. This tool can configure project-level MCP servers that are available whenever you open the project — no global installation needed.
+
+Enable servers in your `config.yml`:
+
+```yaml
+mcps:
+  context7: true           # Up-to-date library docs
+  playwright: true         # Browser automation
+  sequential-thinking: true
+  tavily: true             # Requires TAVILY_API_KEY env var
+```
+
+When any server is enabled, two files are generated:
+
+- **`.mcp.json`** — project root, read by Claude Code and other tools that follow this convention
+- **`.cursor/mcp.json`** — Cursor's project-level MCP config (same format, different path)
+
+### Available servers
+
+| Server | Package | What it adds | API key? |
+|--------|---------|-------------|----------|
+| `context7` | `@upstash/context7-mcp` | Pulls live, version-accurate docs for any library directly into your prompt | No |
+| `playwright` | `@playwright/mcp@latest` | Browser automation — navigate, click, fill forms, take screenshots, scrape | No |
+| `sequential-thinking` | `@modelcontextprotocol/server-sequential-thinking` | Structured multi-step reasoning for complex problems | No |
+| `tavily` | `tavily-mcp@latest` | Real-time web search and content extraction | Yes — `TAVILY_API_KEY` |
+
+All servers run via `npx` so there's nothing to install globally. Node.js must be available.
+
+### Adding your own
+
+To add an MCP server not listed above, edit `lib/generate_mcp.sh` and add a call to `mcp_entry_npx` (or `mcp_entry_npx_env`) in the `generate_mcp` function, following the same pattern as the existing entries.
 
 ## Templates
 

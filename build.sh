@@ -17,6 +17,7 @@ source "$SCRIPT_DIR/lib/generate_agent_configs.sh"
 source "$SCRIPT_DIR/lib/generate_ci.sh"
 source "$SCRIPT_DIR/lib/generate_precommit.sh"
 source "$SCRIPT_DIR/lib/generate_readme.sh"
+source "$SCRIPT_DIR/lib/generate_mcp.sh"
 
 # ── Defaults ───────────────────────────────────────────────────────
 PROJECT_NAME=""
@@ -304,6 +305,7 @@ generate_agents_md "$PROJECT_DIR" "$TEMPLATE_DIR"
 generate_agent_configs "$PROJECT_DIR" "$TEMPLATE_DIR"
 setup_commands
 setup_skills
+generate_mcp "$PROJECT_DIR"
 generate_ci "$PROJECT_DIR" "$TEMPLATE_DIR"
 generate_precommit "$PROJECT_DIR" "$TEMPLATE_DIR"
 generate_readme "$PROJECT_DIR" "$TEMPLATE_DIR"

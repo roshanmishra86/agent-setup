@@ -45,4 +45,13 @@ ci:
   enabled: true
   provider: "github-actions"
 
+# MCP servers to configure for this project.
+# Enabled servers are written to .mcp.json (project root) and .cursor/mcp.json.
+# Both files use the standard mcpServers format recognised by most AI tools.
+mcps:
+  context7: false            # Up-to-date library docs in any prompt (no API key needed)
+  playwright: false          # Browser automation and UI testing (no API key needed)
+  sequential-thinking: false # Structured multi-step reasoning (no API key needed)
+  tavily: false              # Web search — requires TAVILY_API_KEY env var
+
 custom_rules: []
