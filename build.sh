@@ -18,6 +18,7 @@ source "$SCRIPT_DIR/lib/generate_ci.sh"
 source "$SCRIPT_DIR/lib/generate_precommit.sh"
 source "$SCRIPT_DIR/lib/generate_readme.sh"
 source "$SCRIPT_DIR/lib/generate_mcp.sh"
+source "$SCRIPT_DIR/lib/generate_cli.sh"
 
 # ── Defaults ───────────────────────────────────────────────────────
 PROJECT_NAME=""
@@ -26,6 +27,8 @@ USER_CONFIG=""
 FLAG_NO_CI=false
 FLAG_NO_HOOKS=false
 FLAG_AGENTS=""
+FLAG_DRY_RUN=false
+OUTPUT_DIR=""
 
 # ── Globals ────────────────────────────────────────────────────────
 declare -A CFG
@@ -46,11 +49,13 @@ Arguments:
 Options:
   -n, --name NAME       Project name (required)
   -c, --config FILE     Path to config.yml (overrides config.default.yml)
+  -o, --output-dir DIR  Parent directory for the project (default: current dir)
   --no-ci               Skip CI workflow generation
   --no-hooks            Skip pre-commit hook generation
+  --dry-run             Show what files would be generated without creating them
   --agents LIST         Comma-separated list of agents to generate
                         (default: all from config)
-                        Available: agents_md,opencode,claude,codex,
+                        Available: agents_md,opencode,claude,codex,copilot,
                                    antigravity,cursor,gemini
   -h, --help            Show this help message
 
@@ -58,18 +63,30 @@ Examples:
   build.sh js -n my-app
   build.sh py -n my-api -c config.yml
   build.sh js -n my-app --no-ci --agents opencode,claude,cursor
+  build.sh js -n my-app --dry-run
+  build.sh js -n my-app -o ~/projects
 USAGE
+}
+
+# Helper: validate that an option has a required argument
+require_arg() {
+    if [ -z "${2:-}" ] || [[ "$2" == -* ]]; then
+        log_error "Option '$1' requires an argument."
+        exit 1
+    fi
 }
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         js)           PROJECT_TYPE="js";  shift ;;
         py)           PROJECT_TYPE="py";  shift ;;
-        -n|--name)    PROJECT_NAME="$2";  shift 2 ;;
-        -c|--config)  USER_CONFIG="$2";   shift 2 ;;
+        -n|--name)    require_arg "$1" "${2:-}"; PROJECT_NAME="$2";  shift 2 ;;
+        -c|--config)  require_arg "$1" "${2:-}"; USER_CONFIG="$2";   shift 2 ;;
+        -o|--output-dir) require_arg "$1" "${2:-}"; OUTPUT_DIR="$2"; shift 2 ;;
         --no-ci)      FLAG_NO_CI=true;    shift ;;
         --no-hooks)   FLAG_NO_HOOKS=true; shift ;;
-        --agents)     FLAG_AGENTS="$2";   shift 2 ;;
+        --dry-run)    FLAG_DRY_RUN=true;  shift ;;
+        --agents)     require_arg "$1" "${2:-}"; FLAG_AGENTS="$2";   shift 2 ;;
         -h|--help)    show_help; exit 0 ;;
         *)
             log_error "Unknown option: $1"
@@ -141,13 +158,28 @@ fi
 log_ok "Prerequisites satisfied"
 
 # ── Create project ─────────────────────────────────────────────────
-log_step "Creating project: $PROJECT_NAME"
-mkdir -p "$PROJECT_NAME"
-PROJECT_DIR="$(cd "$PROJECT_NAME" && pwd)"
+if $FLAG_DRY_RUN; then
+    PROJECT_DIR=$(mktemp -d)
+    trap 'rm -rf "$PROJECT_DIR"' EXIT
+    log_step "Dry run — previewing project: $PROJECT_NAME"
+else
+    target_base="."
+    [ -n "$OUTPUT_DIR" ] && target_base="$OUTPUT_DIR"
+    target_path="$target_base/$PROJECT_NAME"
+
+    if [ -d "$target_path" ] && [ "$(ls -A "$target_path" 2>/dev/null)" ]; then
+        log_error "Directory '$target_path' already exists and is not empty."
+        exit 1
+    fi
+
+    log_step "Creating project: $PROJECT_NAME"
+    mkdir -p "$target_path"
+    PROJECT_DIR="$(cd "$target_path" && pwd)"
+fi
 
 # ── Init language toolchain ────────────────────────────────────────
 init_toolchain() {
-    cd "$PROJECT_DIR"
+    pushd "$PROJECT_DIR" > /dev/null || return 1
 
     if [ "$PROJECT_TYPE" = "js" ]; then
         log_step "Initializing Bun project"
@@ -180,6 +212,8 @@ init_toolchain() {
         touch src/__init__.py tests/__init__.py
         log_ok "uv project initialized"
     fi
+
+    popd > /dev/null || true
 }
 
 # ── Copy gitignore ─────────────────────────────────────────────────
@@ -227,7 +261,7 @@ setup_skills() {
 
 # ── Install dev dependencies ───────────────────────────────────────
 install_dependencies() {
-    cd "$PROJECT_DIR"
+    pushd "$PROJECT_DIR" > /dev/null || return 1
 
     if [ "$PROJECT_TYPE" = "js" ]; then
         log_step "Installing dev dependencies"
@@ -243,26 +277,28 @@ install_dependencies() {
         py_formatter="$(cfg_get lint.py.formatter ruff)"
         py_type="$(cfg_get lint.py.type_checker mypy)"
 
-        local deps="pytest pytest-cov"
-        # Add linter/formatter (avoid duplicates)
-        deps="$deps $py_linter"
-        [ "$py_formatter" != "$py_linter" ] && deps="$deps $py_formatter"
-        deps="$deps $py_type"
+        # shellcheck disable=SC2206  # intentional word splitting
+        local deps=(pytest pytest-cov "$py_linter")
+        [ "$py_formatter" != "$py_linter" ] && deps+=("$py_formatter")
+        deps+=("$py_type")
 
-        uv add --dev $deps
+        uv add --dev "${deps[@]}"
         uv sync
         log_ok "Dependencies installed"
     fi
+
+    popd > /dev/null || true
 }
 
 # ── Git init + commit ──────────────────────────────────────────────
 init_git() {
-    cd "$PROJECT_DIR"
+    pushd "$PROJECT_DIR" > /dev/null || return 1
     log_step "Initializing git repository"
     git init
     git add .
     git commit -m "feat: initial project setup with universal agent configs"
     log_ok "Git repository initialized with initial commit"
+    popd > /dev/null || true
 }
 
 # ── Print summary ─────────────────────────────────────────────────
@@ -299,7 +335,10 @@ print_summary() {
 }
 
 # ── Main execution ─────────────────────────────────────────────────
-init_toolchain
+if ! $FLAG_DRY_RUN; then
+    init_toolchain
+fi
+
 setup_gitignore
 generate_agents_md "$PROJECT_DIR" "$TEMPLATE_DIR"
 generate_agent_configs "$PROJECT_DIR" "$TEMPLATE_DIR"
@@ -309,6 +348,15 @@ generate_mcp "$PROJECT_DIR"
 generate_ci "$PROJECT_DIR" "$TEMPLATE_DIR"
 generate_precommit "$PROJECT_DIR" "$TEMPLATE_DIR"
 generate_readme "$PROJECT_DIR" "$TEMPLATE_DIR"
+generate_cli "$PROJECT_DIR" "$TEMPLATE_DIR"
+
+if $FLAG_DRY_RUN; then
+    echo ""
+    log_step "Dry run — files that would be generated:"
+    (cd "$PROJECT_DIR" && find . -type f | sort | sed 's|^\./|  |')
+    exit 0
+fi
+
 install_dependencies
 init_git
 print_summary

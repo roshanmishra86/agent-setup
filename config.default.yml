@@ -39,6 +39,15 @@ agents:
     - cursor
     - gemini
 
+cli:
+  tools:
+    justfile: true             # Standardized command runner
+    direnv: true               # Auto-activate environments (.envrc)
+    tmux: true                 # Session management script
+    editorconfig: true         # Editor configuration
+    setup_script: true         # Helper script to install dev tools
+
+
 ci:
   enabled: true
   provider: "github-actions"

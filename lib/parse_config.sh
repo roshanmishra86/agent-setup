@@ -3,6 +3,11 @@
 # Produces a flat associative array with dot-notation keys.
 # Only handles the subset of YAML used by config.default.yml:
 #   scalar values, lists serialized as comma-separated strings.
+# Limitations:
+#   - Keys must be ASCII alphanumeric, underscore, or hyphen only
+#   - Values with colons work only because the first colon is used as delimiter
+#   - No support for nested maps-in-values, multi-line strings, or anchors
+#   - Indentation must use spaces (2-space indent assumed for nesting depth)
 
 # Declare the global config array (caller must `declare -A CFG` before sourcing)
 # After parsing: CFG[project.name]="my-project", CFG[agents.generate]="agents_md,claude,cursor,..."

@@ -2,7 +2,7 @@
 
 Scaffolding tool that generates a new project pre-wired with AI agent configurations, CI, and pre-commit hooks — in a single command.
 
-Instead of manually creating and maintaining separate config files for each AI tool you use, this generates all of them from one shared source of truth: `AGENTS.md`. Every agent-specific file (CLAUDE.md, .cursor/rules/, copilot-instructions.md, .windsurfrules, etc.) is derived from it, so your guidelines stay consistent across tools.
+Instead of manually creating and maintaining separate config files for each AI tool you use, this generates all of them from one shared source of truth: `AGENTS.md`. Every agent-specific file (CLAUDE.md, .cursor/rules/, GEMINI.md, etc.) is derived from it, so your guidelines stay consistent across tools. Some tools (Copilot, Codex, OpenCode) read `AGENTS.md` directly and need no extra config.
 
 ## What you get
 
@@ -58,6 +58,7 @@ Then `cd my-app` and start working.
 ## Prerequisites
 
 - **git**
+- **jq** — for MCP config generation ([install](https://jqlang.github.io/jq/download/))
 - **bun** — for JavaScript projects ([install](https://bun.sh/))
 - **uv** — for Python projects ([install](https://docs.astral.sh/uv/))
 
@@ -73,10 +74,12 @@ Arguments:
 Options:
   -n, --name NAME       Project name (required)
   -c, --config FILE     Config file to use (overrides config.default.yml)
+  -o, --output-dir DIR  Parent directory for the project (default: current dir)
   --no-ci               Skip CI workflow generation
   --no-hooks            Skip pre-commit hook generation
+  --dry-run             Show what files would be generated without creating them
   --agents LIST         Comma-separated agents to generate
-                        Available: agents_md, opencode, claude, codex,
+                        Available: agents_md, opencode, claude, codex, copilot,
                                    antigravity, cursor, gemini
   -h, --help            Show help
 ```
@@ -99,7 +102,6 @@ agents:
     - claude
     - cursor
     - copilot
-    - windsurf
 ```
 
 The full list of options with their defaults is in `config.default.yml`.
@@ -111,6 +113,7 @@ The full list of options with their defaults is in `config.default.yml`.
 | OpenCode | `opencode.json` (MCP only) | Reads `AGENTS.md` natively |
 | Claude Code | `CLAUDE.md`, `.mcp.json` | |
 | Codex CLI | — | Reads `AGENTS.md` natively |
+| Copilot | — | Reads `AGENTS.md` natively |
 | Antigravity | `.agent/rules/*.md` | Rules with `activation: always_on` frontmatter |
 | Cursor | `.cursor/rules/*.mdc`, `.cursor/mcp.json` | Rules with YAML frontmatter |
 | Gemini CLI | `GEMINI.md`, `.gemini/settings.json` | |
@@ -136,8 +139,28 @@ The generated project includes a set of workflow commands in `.agents/commands/`
 
 MCP (Model Context Protocol) servers extend your AI tool with extra capabilities. This tool can configure project-level MCP servers that are available whenever you open the project — no global installation needed.
 
-Enable servers in your `config.yml`:
-
+## CLI enhancements
+ 
+The tool generates configuration to supercharge your terminal workflow:
+ 
+- **Justfile**: A modern command runner (like Make, but better). Run `just setup`, `just dev`, `just test` without remembering tool-specific commands.
+- **Direnv**: An `.envrc` file that automatically activates your Python virtual environment or sets up Node paths when you `cd` into the directory.
+- **Tmux Integration**: A `start-dev.sh` script that launches a tmux session with pre-configured windows for editor, server, and tests.
+- **EditorConfig**: Standardizes indentation and encoding across editors (`.editorconfig`).
+- **Setup Script**: A helper script (`scripts/setup-dev-tools.sh`) to install these CLI tools (plus `bun`) on Linux and macOS.
+ 
+Enable these in `config.yml`:
+ 
+```yaml
+cli:
+  tools:
+    justfile: true
+    direnv: true
+    tmux: true
+    editorconfig: true
+    setup_script: true
+```
+ 
 ```yaml
 mcps:
   context7: true           # Up-to-date library docs
@@ -170,7 +193,7 @@ All servers run via `npx` so there's nothing to install globally. Node.js must b
 
 ### Adding your own
 
-To add an MCP server not listed above, edit `lib/generate_mcp.sh` and add a call to `mcp_entry_npx` (or `mcp_entry_npx_env`) in the `generate_mcp` function, following the same pattern as the existing entries.
+To add an MCP server not listed above, edit `lib/generate_mcp.sh` and add a new `cfg_is` / `jq` block in the `generate_mcp` function, following the same pattern as the existing entries.
 
 ## Templates
 
@@ -193,6 +216,33 @@ templates/
 ```
 
 To add your own rules: create a `.md` file in `templates/rules/` and add it to the assembly in `lib/generate_agents.sh`.
+
+## Development
+
+### Running tests
+
+The project uses [BATS](https://github.com/bats-core/bats-core) (Bash Automated Testing System) for unit and integration tests.
+
+```bash
+# Install BATS
+bun install -g bats
+
+# Run all tests
+bash tests/run.sh
+```
+
+Tests cover:
+
+- **Config parsing** (`tests/parse_config.bats`) — YAML parsing, merging, accessors
+- **Template engine** (`tests/utils.bats`) — conditionals, variable substitution, rendering
+- **CLI arguments** (`tests/cli_args.bats`) — validation, help text, edge cases
+
+### Shellcheck
+
+```bash
+# Lint all shell scripts
+bash tests/shellcheck.sh
+```
 
 ## License
 

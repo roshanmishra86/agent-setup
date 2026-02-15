@@ -41,6 +41,12 @@ generate_agent_configs() {
         log_ok "codex (reads AGENTS.md)"
     fi
 
+    # --- Copilot ---
+    # Reads AGENTS.md natively — no wrapper file needed.
+    if agent_enabled "copilot"; then
+        log_ok "copilot (reads AGENTS.md)"
+    fi
+
     # --- Antigravity (.agent/rules/*.md) ---
     if agent_enabled "antigravity"; then
         generate_antigravity_rules "$project_dir" "$template_dir"
@@ -75,11 +81,12 @@ generate_antigravity_rules() {
     write_antigravity_rule "$rules_dir/debugging.md"    "$out_dir/04-debugging.md"
     write_antigravity_rule "$rules_dir/task-management.md" "$out_dir/05-task-management.md"
     write_antigravity_rule "$rules_dir/code-organization.md" "$out_dir/06-code-organization.md"
+    write_antigravity_rule "$rules_dir/code-review.md"       "$out_dir/07-code-review.md"
 
     if [ "$PROJECT_TYPE" = "js" ]; then
-        write_antigravity_rule "$rules_dir/tooling-js.md" "$out_dir/07-tooling.md"
+        write_antigravity_rule "$rules_dir/tooling-js.md" "$out_dir/08-tooling.md"
     elif [ "$PROJECT_TYPE" = "py" ]; then
-        write_antigravity_rule "$rules_dir/tooling-py.md" "$out_dir/07-tooling.md"
+        write_antigravity_rule "$rules_dir/tooling-py.md" "$out_dir/08-tooling.md"
     fi
 }
 
@@ -118,6 +125,9 @@ generate_cursor_rules() {
     write_cursor_rule "$rules_dir/version-control.md" "$out_dir/version-control.mdc" \
         "Version control and commit conventions" "**" "true"
 
+    write_cursor_rule "$rules_dir/code-review.md" "$out_dir/code-review.mdc" \
+        "Code review guidelines and standards" "**" "true"
+
     if [ "$PROJECT_TYPE" = "js" ]; then
         write_cursor_rule "$rules_dir/tooling-js.md" "$out_dir/tooling.mdc" \
             "JavaScript/TypeScript tooling and commands" "**/*.ts,**/*.js,**/*.tsx,**/*.jsx" "true"
@@ -148,14 +158,3 @@ write_cursor_rule() {
     } > "$dst"
 }
 
-# Helper: process a rule file (conditionals + vars) and write to destination
-write_processed_rule() {
-    local src="$1" dst="$2"
-    if [ ! -f "$src" ]; then return; fi
-
-    local content
-    content=$(<"$src")
-    content="$(process_conditionals "$content")"
-    content="$(substitute_vars "$content")"
-    echo "$content" > "$dst"
-}

@@ -1,0 +1,18 @@
+
+# Automatically activate environment when entering directory
+# Using direnv (https://direnv.net/)
+
+# Check if layout python is supported
+if has python; then
+    layout python
+fi
+
+# Add node_modules/.bin to PATH
+if has bun; then
+    PATH_add node_modules/.bin
+fi
+
+# Check for secrets
+if [ -f .env ]; then
+    dotenv
+fi

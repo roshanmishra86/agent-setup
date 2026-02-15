@@ -1,0 +1,33 @@
+
+# Common tasks for this project
+set shell := ["bash", "-c"]
+
+# Install dependencies
+setup:
+    @echo "Installing dependencies..."
+    {{INSTALL_CMD}}
+
+# Start development server
+dev:
+    @echo "Starting dev server..."
+    {{DEV_CMD}}
+
+# Run tests
+test:
+    @echo "Running tests..."
+    {{TEST_CMD}}
+
+# Lint code
+lint:
+    @echo "Linting..."
+    {{LINT_CMD}}
+
+# Format code
+format:
+    @echo "Formatting..."
+    {{FORMAT_CMD}}
+
+# Clean artifacts
+clean:
+    @echo "Cleaning up..."
+    rm -rf node_modules dist .venv __pycache__ .pytest_cache

@@ -24,12 +24,7 @@ generate_precommit() {
         return
     fi
 
-    # Pre-commit config needs conditional processing, not just var substitution
-    local content
-    content=$(<"$tmpl_file")
-    content="$(process_conditionals "$content")"
-    content="$(substitute_vars "$content")"
-    echo "$content" > "$project_dir/.pre-commit-config.yaml"
+    render_processed_template "$tmpl_file" "$project_dir/.pre-commit-config.yaml"
 
     log_ok ".pre-commit-config.yaml"
 }
